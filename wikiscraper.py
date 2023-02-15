@@ -15,7 +15,7 @@ import time
 import locale
 
 locale.setlocale(category=locale.LC_ALL,
-                 locale="Turkish")
+                 locale="tr_TR.UTF-8")
 wp.set_lang("tr")
 
 
@@ -55,6 +55,6 @@ for year in years:
     time.sleep(1)
 
 dfall = pd.concat(scraped_tables)
+dfall["city"] = dfall["city"].str.encode("iso8859-9").str.decode("UTF-8")
 dfall.to_csv("turkey_cities.csv", index=False)
 
-dfall["city"].str.replace("Ä±", "ı")
