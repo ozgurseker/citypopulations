@@ -1,4 +1,5 @@
 library(tidyverse)
+library(readxl)
 
 #### Prep and Combine Data ####
 df_global <- read_csv("UNdata_Export_20230215_190540160.csv") %>% filter(Sex == "Both Sexes") %>% select(-Sex)
@@ -33,10 +34,7 @@ df %>% filter(str_detect(country, "Korea")) %>% group_by(year) %>% count()
 
 df %>% filter(population > 5000000)
 
-library(readr)
-worldcities <- read_csv("~/Downloads/simplemaps_worldcities_basicv1.75/worldcities.csv")
-View(worldcities)
-
+#### ####
 # ulke populasyonu buyume hizlari ekle
 # sehir populasyonlari buyume hizi ekleI
 
