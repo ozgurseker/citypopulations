@@ -32,5 +32,24 @@ df_countries <- df_countries %>% pivot_longer(
 ) %>% mutate(population_country = as.numeric(population_country))
 
 df_cities <- left_join(df_cities, df_countries, by = c("year", "country_name"))
-
 df_cities <- df_cities %>% mutate(pop_share = population/population_country)
+df_cities$year <- as.numeric(df_cities$year)
+df_cities <- df_cities %>% mutate(
+  logpop = log(population),
+  logpopcountry = log(population_country)
+) %>% group_by(city) %>% arrange(year) %>%
+  mutate(
+    lastpop = lag(population),
+    lastlogpop = lag(logpop),
+    lastpopcountry = lag(population_country),
+    lastlogpopcountry = lag(logpopcountry),
+    lastyear = lag(year),
+    growthrate = (logpop - lastlogpop)/(year - lastyear),
+    sharechange = pop_share - lag(pop_share)
+  )
+
+
+
+
+
+
