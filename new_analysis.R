@@ -14,7 +14,23 @@ df_countries$country_name[is.na(df_countries$country_name)] <- df_countries$`Cou
 df_cities$country_name <- countrycode(sourcevar = df_cities$`Country Code`, origin = "iso3n", destination = "country.name")
 
 # Drop unnecessary columns
-df_countries <- df_countries %>% select(-`Series Name`,-`Series Code`, -`Country Code`, -`Country Name`)
+df_countries <- df_countries %>% select(-all_of(colnames(df_countries)[1:4]))
 df_cities <- df_cities %>% select(- `Country Code`, -`Country or area`, -`City Code`, -Note, -Latitude, -Longitude)
 colnames(df_cities)[1] <- "city"
 colnames(df_countries) <- c(paste(1960:2021),"country_name")
+
+df_cities <- df_cities %>% pivot_longer(
+  cols = `1950`:`2030`,
+  names_to = "year",
+  values_to = "population"
+) %>% mutate(population = 1000*population)
+
+df_countries <- df_countries %>% pivot_longer(
+  cols = `1960`:`2021`,
+  names_to = "year",
+  values_to = "population_country"
+) %>% mutate(population_country = as.numeric(population_country))
+
+df_cities <- left_join(df_cities, df_countries, by = c("year", "country_name"))
+
+df_cities <- df_cities %>% mutate(pop_share = population/population_country)
