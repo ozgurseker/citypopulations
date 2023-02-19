@@ -88,13 +88,30 @@ df_cities <- left_join(df_cities, df_countries, by = c("year", "country_name")) 
 
 
 #### Search ####
+largest_cities1970 <- (df_cities %>% group_by(country_name) %>% filter(year==1970) %>% 
+                         filter(pop_share==max(pop_share), income_level %in% incomelevels[2:3]))$city
 
-df_cities %>% filter(year < 1970, pop_share > 0.1, pop_share < 0.7, excessgrowth < 0.1) %>%
-  ggplot() + geom_point(aes(x=pop_share, y =excessgrowth)) + 
-  stat_smooth(aes(x=pop_share, y =excessgrowth), se = FALSE)
+df_cities %>% filter(year < 1990, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970) %>%
+  ggplot() + geom_point(aes(x=logpop*pop_share*(1-pop_share), y =excessgrowth)) + 
+  stat_smooth(aes(x=logpop*pop_share*(1-pop_share), y =excessgrowth), se = FALSE)
 
-df_cities %>% filter(year < 2000, pop_share > 0.1, pop_share < 0.7, excessgrowth < 0.1, city %in% largest_cities1970) %>%
-  ggplot() + geom_point(aes(x=(population_country - population)/population, y =growthrate))
+df_cities %>% filter(year < 1990, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970) %>%
+  ggplot() + geom_point(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear)))) + 
+  stat_smooth(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), se = FALSE, method = "lm")
+
+
+
+#### Nice Ones ####
+largest_cities1970 <- (df_cities %>% group_by(country_name) %>% filter(year==1970) %>% 
+                         filter(pop_share==max(pop_share), income_level %in% incomelevels[2:3]))$city
+
+df_cities %>% filter(year < 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970) %>%
+  ggplot() + geom_point(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear)))) + 
+  stat_smooth(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), se = FALSE, method = "lm") + 
+  geom_point(data=df_cities %>% filter(year < 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city =="Istanbul"), 
+             aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), 
+             color='red',
+             size=3)
 
 
 df_cities %>% filter(city %in% c("Istanbul", "Seoul", "Delhi", "Ciudad de México (Mexico City)")) %>%
@@ -114,4 +131,3 @@ summary(mdl)
 largest_cities1970 <- (df_cities %>% group_by(country_name) %>% filter(year==1970) %>% 
   filter(pop_share==max(pop_share)))$city
 
-unique(df_cities$country_name)[!unique(df_cities$country_name) %in% cgroups$Country]
