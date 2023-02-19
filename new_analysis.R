@@ -1,13 +1,14 @@
+{
 library(tidyverse)
 library(readxl)
 library(countrycode)
-
-#### Import
+}
+#### Import ####
 
 df_cities <- read_excel("global-city-population-estimates.xls", sheet = "CITIES-OVER-300K")
 df_countries <- read_csv("countries_pop_worldbank/5602213b-aad1-43d2-8ea5-b5434491cd6d_Data.csv")
 
-#### Income Groups Investigate
+#### Income Groups Investigate ####
 cgroups <- read_csv("data-XHzgJ.csv") 
 
 for(year in 1987:2020){
@@ -16,8 +17,9 @@ for(year in 1987:2020){
 cgroups %>% group_by(`Income group`) %>% summarise(max = max(`2020`, na.rm = TRUE),
                                                    min = min(`2020`, na.rm = TRUE),
                                                    mean = mean(`2020`, na.rm = TRUE))
-
-# Unify country names
+incomethresholds <- c(1000,4000,12500)
+incomelevels <- c("Low","LowMid", "HighMid", "High")
+#### Unify country names ####
 df_countries$country_name <- countrycode(sourcevar = df_countries$`Country Code`, origin = "wb", destination = "country.name")
 df_countries <- df_countries %>% filter(str_detect(`Series Name`, "Popul"))
 df_countries$country_name[is.na(df_countries$country_name)] <- df_countries$`Country Name`[is.na(df_countries$country_name)]
@@ -28,7 +30,7 @@ cgroups <- cgroups %>% mutate(Country = countrycode(
   origin = "country.name", destination = "country.name"
 ))
 
-# Drop unnecessary columns
+#### Drop unnecessary columns and pivot longer ####
 
 df_countries <- df_countries %>% select(-all_of(colnames(df_countries)[1:4]))
 df_cities <- df_cities %>% select(- `Country Code`, -`Country or area`, -`City Code`, -Note, -Latitude, -Longitude)
@@ -54,10 +56,21 @@ cgroups <- cgroups %>% pivot_longer(
   values_to = "income_country"
 ) 
 
-df_cities <- left_join(df_cities, df_countries, by = c("year", "country_name"))
-df_cities <- df_cities %>% mutate(pop_share = population/population_country)
-df_cities$year <- as.numeric(df_cities$year)
-df_cities <- df_cities %>% mutate(
+#### Combine dataframes and modify ####
+
+df_countries <- left_join(df_countries, cgroups, by = c("year"="year","country_name"="Country")) %>% 
+  mutate(
+  income_level = ifelse(income_country < incomethresholds[1], incomelevels[1], NA),
+  income_level = ifelse(income_country < incomethresholds[2] & income_country >= incomethresholds[1], incomelevels[2], income_level),
+  income_level = ifelse(income_country < incomethresholds[3] & income_country >= incomethresholds[2], incomelevels[3], income_level),
+  income_level = ifelse(income_country >= incomethresholds[3], incomelevels[4], income_level)
+) %>% group_by(country_name) %>% fill(income_level, .direction = "up")
+
+
+df_cities <- left_join(df_cities, df_countries, by = c("year", "country_name")) %>% 
+  mutate(pop_share = population/population_country,
+         year = as.numeric(year)) %>% 
+  mutate(
   logpop = log(population),
   logpopcountry = log(population_country)
 ) %>% group_by(city) %>% arrange(year) %>%
@@ -71,10 +84,10 @@ df_cities <- df_cities %>% mutate(
     growthratecountry = (logpopcountry - lastlogpopcountry)/(year - lastyear),
     sharechange = (pop_share - lag(pop_share))/(year - lastyear),
     excessgrowth = growthrate - growthratecountry
-  )
+  ) %>% fill(income_level, .direction = "up")
 
 
-# Plots #
+#### Search ####
 
 df_cities %>% filter(year < 1970, pop_share > 0.1, pop_share < 0.7, excessgrowth < 0.1) %>%
   ggplot() + geom_point(aes(x=pop_share, y =excessgrowth)) + 
