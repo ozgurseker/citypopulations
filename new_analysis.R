@@ -105,9 +105,12 @@ df_cities %>% filter(year < 1990, pop_share > 0.1, pop_share < 0.8, growthrate <
 largest_cities1970 <- (df_cities %>% group_by(country_name) %>% filter(year==1970) %>% 
                          filter(pop_share==max(pop_share), income_level %in% incomelevels[2:3]))$city
 
-df_cities %>% filter(year < 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970) %>%
+df_cities %>% filter(pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970) %>%
   ggplot() + geom_point(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear)))) + 
-  stat_smooth(aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), se = FALSE, method = "lm") + 
+  stat_smooth(data= df_cities %>% filter(year <= 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970),
+              aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), se = FALSE, method = "lm") +
+  stat_smooth(data= df_cities %>% filter(year > 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city %in% largest_cities1970),
+              aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), se = FALSE, method = "lm", col = "red") +
   geom_point(data=df_cities %>% filter(year < 2000, pop_share > 0.1, pop_share < 0.8, growthrate < 0.1, city =="Istanbul"), 
              aes(x=lastlogpop, y =log((population - lastpop)/(year-lastyear))), 
              color='red',
