@@ -4,7 +4,7 @@
 
 - Data source for global cities: https://data.un.org/Data.aspx?d=POP&f=tableCode%3A240 (direct download .csv file)
 
-- More reliable data for cities over 300k https://data.london.gov.uk/dataset/global-city-population-estimates
+- Better dataset for cities over 300k https://data.london.gov.uk/dataset/global-city-population-estimates
 
 - Data for population of countries over time https://databank.worldbank.org/reports.aspx?source=2&series=SP.POP.TOTL&country=#
 
